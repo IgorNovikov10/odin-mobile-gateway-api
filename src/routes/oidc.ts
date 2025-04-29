@@ -4,6 +4,6 @@ import { getAuthUrl, redirectVerify } from "../controllers/oidcController";
 const router = Router();
 
 router.get("/auth", getAuthUrl);
-router.get("/verify", redirectVerify);
+router.post("/verify", redirectVerify);
 
 export default router;

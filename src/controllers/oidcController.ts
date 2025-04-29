@@ -2,6 +2,7 @@ import { Response, NextFunction } from "express";
 import { OidcAuthRequest, OidcVerifyRequest } from "../shared/types";
 import { ApiError } from "../shared/classes";
 import { generateAuthUrl } from "../services/oidcService";
+import { config } from "../shared/config";
 
 // Get authorization URL
 export const getAuthUrl = (
@@ -19,13 +20,13 @@ export const getAuthUrl = (
 };
 
 // Handle redirect from Signicat
-export const redirectVerify = (
+export const redirectVerify = async (
   req: OidcVerifyRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
-    const { code, state } = req.query;
+    const { code, state } = req.body;
 
     console.log("code", code);
     console.log("state", state);
@@ -34,10 +35,48 @@ export const redirectVerify = (
       throw new ApiError(400, "Missing code in query");
     }
 
-    res.json({
-      message: "Received code, exchange for token next.",
+    const payload = new URLSearchParams({
+      grant_type: "authorization_code",
+      redirect_uri: config.signicat.redirectUri,
       code,
-      state,
+      client_id: config.signicat.clientId,
+    });
+
+    const tokenUrl = `${config.signicat.baseUrl}/token`;
+    const basicAuth = Buffer.from(
+      `${config.signicat.clientId}:${config.signicat.clientSecret}`
+    ).toString("base64");
+
+    // console.log("basicAuth", basicAuth);
+    // console.log(
+    //   "config.signicat",
+    //   `${config.signicat.clientId}:${config.signicat.clientSecret}`
+    // );
+
+    const response = await fetch(tokenUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${basicAuth}`,
+      },
+      body: payload.toString(),
+    });
+
+    const responseBody = await response.json();
+
+    if (!response.ok) {
+      const errorDescription =
+        responseBody.error_description || "Failed to create token";
+      throw new ApiError(response.status, errorDescription);
+    }
+
+    res.status(200).json({
+      idToken: responseBody.id_token,
+      accessToken: responseBody.access_token,
+      tokenType: responseBody.token_type,
+      refreshToken: responseBody.refresh_token,
+      scope: responseBody.scope,
+      expiresIn: responseBody.expires_in,
     });
   } catch (error) {
     next(error);
