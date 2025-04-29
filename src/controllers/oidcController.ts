@@ -47,12 +47,6 @@ export const redirectVerify = async (
       `${config.signicat.clientId}:${config.signicat.clientSecret}`
     ).toString("base64");
 
-    // console.log("basicAuth", basicAuth);
-    // console.log(
-    //   "config.signicat",
-    //   `${config.signicat.clientId}:${config.signicat.clientSecret}`
-    // );
-
     const response = await fetch(tokenUrl, {
       method: "POST",
       headers: {
@@ -70,14 +64,16 @@ export const redirectVerify = async (
       throw new ApiError(response.status, errorDescription);
     }
 
-    res.status(200).json({
+    const appPayload = new URLSearchParams({
       idToken: responseBody.id_token,
       accessToken: responseBody.access_token,
       tokenType: responseBody.token_type,
       refreshToken: responseBody.refresh_token,
       scope: responseBody.scope,
-      expiresIn: responseBody.expires_in,
+      expiresIn: responseBody.expires_in?.toString(),
     });
+
+    res.redirect(`odin-fond-app://oidc/callback?${appPayload.toString()}`);
   } catch (error) {
     next(error);
   }
