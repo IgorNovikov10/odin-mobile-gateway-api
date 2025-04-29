@@ -64,16 +64,25 @@ export const redirectVerify = async (
       throw new ApiError(response.status, errorDescription);
     }
 
-    const appPayload = new URLSearchParams({
-      idToken: responseBody.id_token,
-      accessToken: responseBody.access_token,
-      tokenType: responseBody.token_type,
-      refreshToken: responseBody.refresh_token,
-      scope: responseBody.scope,
-      expiresIn: responseBody.expires_in?.toString(),
-    });
-
-    res.redirect(`odin-fond-app://oidc/callback?${appPayload.toString()}`);
+    res.send(`
+      <html>
+        <body>
+          <script>
+            const appPayload = ${JSON.stringify({
+              idToken: responseBody.id_token,
+              accessToken: responseBody.access_token,
+              tokenType: responseBody.token_type,
+              refreshToken: responseBody.refresh_token,
+              scope: responseBody.scope,
+              expiresIn: responseBody.expires_in?.toString(),
+            })};
+    
+            window.ReactNativeWebView?.postMessage(JSON.stringify(appPayload));
+          </script>
+          Redirecting...
+        </body>
+      </html>
+    `);
   } catch (error) {
     next(error);
   }
