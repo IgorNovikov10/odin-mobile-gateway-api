@@ -26,7 +26,7 @@ export const redirectVerify = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { code, state } = req.body;
+    const { code, state } = req.query;
 
     console.log("code", code);
     console.log("state", state);
