@@ -26,11 +26,11 @@ export const redirectVerify = async (
   try {
     const { code, state } = req.query;
 
+    // TODO: check if we need to check state parameter to send callbacks to the app
     console.log("code", code);
     console.log("state", state);
 
-    // TODO: remove test error condition
-    if (true) {
+    if (!code) {
       return sendWebViewMessage(res, { error: "Missing authorization code" });
     }
 
