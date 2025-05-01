@@ -21,8 +21,7 @@ export const getAuthUrl = (
 // Handle redirect from Signicat
 export const redirectVerify = async (
   req: OidcVerifyRequest,
-  res: Response,
-  next: NextFunction
+  res: Response
 ): Promise<void> => {
   try {
     const { code, state } = req.query;
@@ -30,7 +29,8 @@ export const redirectVerify = async (
     console.log("code", code);
     console.log("state", state);
 
-    if (!code) {
+    // TODO: remove test error condition
+    if (true) {
       return sendWebViewMessage(res, { error: "Missing authorization code" });
     }
 
