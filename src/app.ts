@@ -20,19 +20,15 @@ app.use((req: Request, res: Response) => {
 });
 
 // Global error middleware
-app.use(
-  (err: Error | ApiError, _: Request, res: Response, next: NextFunction) => {
-    const statusCode = err instanceof ApiError ? err.statusCode : 500;
+app.use((err: Error | ApiError, _: Request, res: Response) => {
+  const statusCode = err instanceof ApiError ? err.statusCode : 500;
 
-    res.status(statusCode).json({
-      error: {
-        message: err.message || "Internal Server Error",
-      },
-    });
-
-    next(err);
-  }
-);
+  res.status(statusCode).json({
+    error: {
+      message: err.message || "Internal Server Error",
+    },
+  });
+});
 
 const PORT = process.env.PORT || 3000;
 

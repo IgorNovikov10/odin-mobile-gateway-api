@@ -1,3 +1,4 @@
+import { Response } from "express";
 import { config } from "../shared/config";
 
 export const generateAuthUrl = (): string => {
@@ -24,4 +25,17 @@ export const generateAuthUrl = (): string => {
   });
 
   return `${baseUrl}/authorize?${queryParams.toString()}`;
+};
+
+export const sendWebViewMessage = (res: Response, payload: object) => {
+  res.send(`
+    <html>
+      <body>
+        <script>
+          const appPayload = ${JSON.stringify(payload)};
+          window.ReactNativeWebView?.postMessage(JSON.stringify(appPayload));
+        </script>
+      </body>
+    </html>
+  `);
 };

@@ -1,7 +1,6 @@
 import { Response, NextFunction } from "express";
 import { OidcAuthRequest, OidcVerifyRequest } from "../shared/types";
-import { ApiError } from "../shared/classes";
-import { generateAuthUrl } from "../services/oidcService";
+import { generateAuthUrl, sendWebViewMessage } from "../services/oidcService";
 import { config } from "../shared/config";
 
 // Get authorization URL
@@ -32,7 +31,7 @@ export const redirectVerify = async (
     console.log("state", state);
 
     if (!code) {
-      throw new ApiError(400, "Missing code in query");
+      return sendWebViewMessage(res, { error: "Missing authorization code" });
     }
 
     const payload = new URLSearchParams({
@@ -61,29 +60,19 @@ export const redirectVerify = async (
     if (!response.ok) {
       const errorDescription =
         responseBody.error_description || "Failed to create token";
-      throw new ApiError(response.status, errorDescription);
+      return sendWebViewMessage(res, { error: errorDescription });
     }
 
-    res.send(`
-      <html>
-        <body>
-          <script>
-            const appPayload = ${JSON.stringify({
-              idToken: responseBody.id_token,
-              accessToken: responseBody.access_token,
-              tokenType: responseBody.token_type,
-              refreshToken: responseBody.refresh_token,
-              scope: responseBody.scope,
-              expiresIn: responseBody.expires_in?.toString(),
-            })};
-    
-            window.ReactNativeWebView?.postMessage(JSON.stringify(appPayload));
-          </script>
-          Redirecting...
-        </body>
-      </html>
-    `);
-  } catch (error) {
-    next(error);
+    sendWebViewMessage(res, {
+      idToken: responseBody.id_token,
+      accessToken: responseBody.access_token,
+      tokenType: responseBody.token_type,
+      refreshToken: responseBody.refresh_token,
+      scope: responseBody.scope,
+      expiresIn: responseBody.expires_in?.toString(),
+    });
+  } catch (error: any) {
+    const errorMessage = error?.message || "Unexpected error";
+    return sendWebViewMessage(res, { error: errorMessage });
   }
 };
