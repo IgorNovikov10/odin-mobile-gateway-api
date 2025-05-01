@@ -69,6 +69,7 @@ export const redirectVerify = async (
       tokenType: responseBody.token_type,
       refreshToken: responseBody.refresh_token,
       scope: responseBody.scope,
+      code: responseBody.code,
       expiresIn: responseBody.expires_in?.toString(),
     });
   } catch (error: any) {
