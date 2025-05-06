@@ -33,7 +33,7 @@ export const sendWebViewMessage = (res: Response, payload: object) => {
       <body>
         <script>
           const appPayload = ${JSON.stringify(payload)};
-          window.ReactNativeWebView?.postMessage(JSON.stringify(appPayload));
+          window.ReactNativeWebView?.postMessage(appPayload);
         </script>
       </body>
     </html>
