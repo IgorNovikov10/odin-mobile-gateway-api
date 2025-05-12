@@ -63,6 +63,8 @@ export const redirectVerify = async (
       return sendWebViewMessage(res, { error: errorDescription });
     }
 
+    console.log("responseBody", responseBody);
+
     sendWebViewMessage(res, {
       idToken: responseBody.id_token,
       accessToken: responseBody.access_token,
