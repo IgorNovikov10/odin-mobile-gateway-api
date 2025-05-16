@@ -1,6 +1,14 @@
 import { Response, NextFunction } from "express";
-import { OidcAuthRequest, OidcVerifyRequest } from "../shared/types";
-import { generateAuthUrl, sendWebViewMessage } from "../services/oidcService";
+import {
+  OidcAuthRequest,
+  OidcVerifyRequest,
+  OidcTokenRequest,
+} from "../shared/types";
+import {
+  generateAuthUrl,
+  sendWebViewMessage,
+  requestToken,
+} from "../services/oidcService";
 import { config } from "../shared/config";
 
 // Get authorization URL
@@ -15,6 +23,46 @@ export const getAuthUrl = (
     res.json({ authUrl });
   } catch (error) {
     next(error);
+  }
+};
+
+// Handle refresh token functionality
+export const refreshTokenHandler = async (
+  req: OidcTokenRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      res.status(400).json({ error: "Missing refresh token" });
+      return;
+    }
+
+    const payload = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: config.signicat.clientId,
+    });
+
+    const { success, data } = await requestToken(payload);
+
+    if (!success) {
+      const errorDescription =
+        data.error_description || "Failed to refresh token";
+      res.status(400).json({ error: errorDescription });
+      return;
+    }
+
+    res.json({
+      accessToken: data.access_token,
+      tokenType: data.token_type,
+      refreshToken: data.refresh_token,
+      expiresIn: data.expires_in?.toString(),
+    });
+  } catch (error: any) {
+    const errorMessage = error?.message || "Unexpected error";
+    res.status(500).json({ error: errorMessage });
   }
 };
 
@@ -41,38 +89,19 @@ export const redirectVerify = async (
       client_id: config.signicat.clientId,
     });
 
-    const tokenUrl = `${config.signicat.baseUrl}/token`;
-    const basicAuth = Buffer.from(
-      `${config.signicat.clientId}:${config.signicat.clientSecret}`
-    ).toString("base64");
+    const { success, data } = await requestToken(payload);
 
-    const response = await fetch(tokenUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${basicAuth}`,
-      },
-      body: payload.toString(),
-    });
-
-    const responseBody = await response.json();
-
-    if (!response.ok) {
+    if (!success) {
       const errorDescription =
-        responseBody.error_description || "Failed to create token";
+        data.error_description || "Failed to create token";
       return sendWebViewMessage(res, { error: errorDescription });
     }
 
-    console.log("responseBody", responseBody);
-
     sendWebViewMessage(res, {
-      idToken: responseBody.id_token,
-      accessToken: responseBody.access_token,
-      tokenType: responseBody.token_type,
-      refreshToken: responseBody.refresh_token,
-      scope: responseBody.scope,
-      code,
-      expiresIn: responseBody.expires_in?.toString(),
+      accessToken: data.access_token,
+      tokenType: data.token_type,
+      refreshToken: data.refresh_token,
+      expiresIn: data.expires_in?.toString(),
     });
   } catch (error: any) {
     const errorMessage = error?.message || "Unexpected error";

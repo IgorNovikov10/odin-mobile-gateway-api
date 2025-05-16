@@ -1,5 +1,6 @@
 import { Response } from "express";
 import { config } from "../shared/config";
+import { OidcTokenResponse } from "../shared/types";
 
 export const generateAuthUrl = (): string => {
   const {
@@ -38,4 +39,30 @@ export const sendWebViewMessage = (res: Response, payload: object) => {
       </body>
     </html>
   `);
+};
+
+export const requestToken = async (
+  payload: URLSearchParams
+): Promise<{ success: boolean; data: OidcTokenResponse }> => {
+  const tokenUrl = `${config.signicat.baseUrl}/token`;
+
+  const basicAuth = Buffer.from(
+    `${config.signicat.clientId}:${config.signicat.clientSecret}`
+  ).toString("base64");
+
+  const response = await fetch(tokenUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${basicAuth}`,
+    },
+    body: payload.toString(),
+  });
+
+  const data: OidcTokenResponse = await response.json();
+
+  return {
+    success: response.ok,
+    data,
+  };
 };
