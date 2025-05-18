@@ -48,9 +48,7 @@ export const refreshTokenHandler = async (
     const { success, data } = await requestToken(payload);
 
     if (!success) {
-      const errorDescription =
-        data.error_description || "Failed to refresh token";
-      res.status(400).json({ error: errorDescription });
+      res.status(400).json(data);
       return;
     }
 
