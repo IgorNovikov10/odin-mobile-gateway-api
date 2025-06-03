@@ -34,6 +34,8 @@ export const refreshTokenHandler = async (
   try {
     const { refreshToken } = req.body;
 
+    console.log("refreshToken from the app: ", refreshToken);
+
     if (!refreshToken) {
       res.status(400).json({ error: "Missing refresh token" });
       return;
@@ -46,6 +48,8 @@ export const refreshTokenHandler = async (
     });
 
     const { success, data } = await requestToken(payload);
+
+    console.log("data from OIDC response: ", JSON.stringify(data));
 
     if (!success) {
       res.status(400).json(data);
