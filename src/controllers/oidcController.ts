@@ -49,7 +49,7 @@ export const refreshTokenHandler = async (
 
     const { success, data } = await requestToken(payload);
 
-    console.log("refreshToken from OIDC response: ", data.refresh_token);
+    console.log("OIDC response: ", data);
 
     if (!success) {
       res.status(400).json(data);
