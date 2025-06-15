@@ -45,6 +45,7 @@ export const refreshTokenHandler = async (
       grant_type: "refresh_token",
       refresh_token: refreshToken,
       client_id: config.signicat.clientId,
+      scope: config.signicat.scope,
     });
 
     const { success, data } = await requestToken(payload);
