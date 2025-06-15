@@ -59,6 +59,7 @@ export const refreshTokenHandler = async (
 
     res.json({
       accessToken: data.access_token,
+      idToken: data.id_token,
       tokenType: data.token_type,
       refreshToken: data.refresh_token,
       expiresIn: data.expires_in?.toString(),
@@ -102,6 +103,7 @@ export const redirectVerify = async (
 
     sendWebViewMessage(res, {
       accessToken: data.access_token,
+      idToken: data.id_token,
       tokenType: data.token_type,
       refreshToken: data.refresh_token,
       expiresIn: data.expires_in?.toString(),
