@@ -90,6 +90,7 @@ export const redirectVerify = async (
       grant_type: "authorization_code",
       redirect_uri: config.signicat.redirectUri,
       code,
+      scope: config.signicat.scope,
       client_id: config.signicat.clientId,
     });
 
