@@ -9,7 +9,7 @@ import {
 const router = Router();
 
 router.get("/auth", getAuthUrl);
-router.get("/getUserInfo", getUserInfo);
+router.post("/getUserInfo", getUserInfo);
 router.get("/verify", redirectVerify);
 router.post("/token/refresh", refreshTokenHandler);
 
