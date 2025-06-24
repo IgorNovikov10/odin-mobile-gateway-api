@@ -147,8 +147,19 @@ export const getUserInfo = async (
       return;
     }
 
-    const userInfo = await response.json();
-    res.json(userInfo);
+    const raw = await response.text();
+
+    console.log("raw", raw);
+
+    try {
+      const parsed = JSON.parse(raw);
+      res.json(parsed);
+    } catch {
+      res.status(500).json({
+        error: "UserInfo response is not valid JSON",
+        raw,
+      });
+    }
   } catch (error: any) {
     const errorMessage = error?.message || "Unexpected error";
     res.status(500).json({ error: errorMessage });
