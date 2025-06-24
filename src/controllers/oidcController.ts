@@ -3,6 +3,7 @@ import {
   OidcAuthRequest,
   OidcVerifyRequest,
   OidcTokenRequest,
+  OidcGetUserRequest,
 } from "../shared/types";
 import {
   generateAuthUrl,
@@ -112,5 +113,44 @@ export const redirectVerify = async (
   } catch (error: any) {
     const errorMessage = error?.message || "Unexpected error";
     return sendWebViewMessage(res, { error: errorMessage });
+  }
+};
+
+// Get user info request
+export const getUserInfo = async (
+  req: OidcGetUserRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+      res.status(400).json({ error: "Missing access token" });
+      return;
+    }
+
+    const getUserInfoUrl = `${config.signicat.baseUrl}/userinfo`;
+
+    const response = await fetch(getUserInfoUrl, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      res
+        .status(response.status)
+        .json({ error: `UserInfo request failed: ${errorText}` });
+      return;
+    }
+
+    const userInfo = await response.json();
+    res.json(userInfo);
+  } catch (error: any) {
+    const errorMessage = error?.message || "Unexpected error";
+    res.status(500).json({ error: errorMessage });
   }
 };

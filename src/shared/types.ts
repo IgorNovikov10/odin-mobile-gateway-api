@@ -15,6 +15,12 @@ export interface OidcTokenRequest extends Request {
   };
 }
 
+export interface OidcGetUserRequest extends Request {
+  query: {
+    accessToken: string;
+  };
+}
+
 export interface OidcTokenResponse {
   id_token?: string;
   access_token?: string;
