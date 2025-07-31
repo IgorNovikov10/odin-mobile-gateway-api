@@ -3,14 +3,14 @@ import {
   getAuthUrl,
   redirectVerify,
   refreshTokenHandler,
-  getUserInfo,
+  decryptIdTokenHandler,
 } from "../controllers/oidcController";
 
 const router = Router();
 
 router.get("/auth", getAuthUrl);
-router.post("/getUserInfo", getUserInfo);
 router.get("/verify", redirectVerify);
 router.post("/token/refresh", refreshTokenHandler);
+router.post("/token/id/decrypt", decryptIdTokenHandler);
 
 export default router;

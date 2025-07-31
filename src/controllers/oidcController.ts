@@ -3,7 +3,7 @@ import {
   OidcAuthRequest,
   OidcVerifyRequest,
   OidcTokenRequest,
-  OidcGetUserRequest,
+  OidcIdTokenDecryptRequest,
 } from "../shared/types";
 import {
   generateAuthUrl,
@@ -11,6 +11,15 @@ import {
   requestToken,
 } from "../services/oidcService";
 import { config } from "../shared/config";
+import path from "path";
+import { readFileSync } from "fs";
+import {
+  importJWK,
+  jwtDecrypt,
+  jwtVerify,
+  decodeJwt,
+  compactDecrypt,
+} from "jose";
 
 // Get authorization URL
 export const getAuthUrl = (
@@ -91,7 +100,6 @@ export const redirectVerify = async (
       grant_type: "authorization_code",
       redirect_uri: config.signicat.redirectUri,
       code,
-      scope: config.signicat.scope,
       client_id: config.signicat.clientId,
     });
 
@@ -116,52 +124,37 @@ export const redirectVerify = async (
   }
 };
 
-// Get user info request
-export const getUserInfo = async (
-  req: OidcGetUserRequest,
-  res: Response
+// Handle ID token decryption
+export const decryptIdTokenHandler = async (
+  req: OidcIdTokenDecryptRequest,
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
-    const { accessToken } = req.body;
+    const { idToken } = req.body;
 
-    if (!accessToken) {
-      res.status(400).json({ error: "Missing access token" });
+    if (!idToken) {
+      res.status(400).json({ error: "Missing idToken" });
       return;
     }
 
-    const getUserInfoUrl = `${config.signicat.baseUrl}/userinfo`;
+    // This file should be available to be able to decode token with the Signicat private key
+    const jwkPath = path.resolve(process.cwd(), "test-key.json");
+    const jwkRaw = readFileSync(jwkPath, "utf-8");
+    const jwk = JSON.parse(jwkRaw);
+    const key = await importJWK(jwk, jwk.alg || "RSA-OAEP");
 
-    const response = await fetch(getUserInfoUrl, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
+    const { plaintext, protectedHeader } = await compactDecrypt(idToken, key);
+
+    const nestedJwt = new TextDecoder().decode(plaintext);
+    const payload = decodeJwt(nestedJwt);
+
+    res.json({
+      payload,
+      header: protectedHeader,
+      nestedJwt,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      res
-        .status(response.status)
-        .json({ error: `UserInfo request failed: ${errorText}` });
-      return;
-    }
-
-    const raw = await response.text();
-
-    console.log("raw", raw);
-
-    try {
-      const parsed = JSON.parse(raw);
-      res.json(parsed);
-    } catch {
-      res.status(500).json({
-        error: "UserInfo response is not valid JSON",
-        raw,
-      });
-    }
   } catch (error: any) {
-    const errorMessage = error?.message || "Unexpected error";
-    res.status(500).json({ error: errorMessage });
+    next(error);
   }
 };

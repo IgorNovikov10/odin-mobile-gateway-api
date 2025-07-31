@@ -15,9 +15,9 @@ export interface OidcTokenRequest extends Request {
   };
 }
 
-export interface OidcGetUserRequest extends Request {
+export interface OidcIdTokenDecryptRequest extends Request {
   query: {
-    accessToken: string;
+    idToken: string;
   };
 }
 
