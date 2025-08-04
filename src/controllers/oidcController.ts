@@ -139,7 +139,7 @@ export const decryptIdTokenHandler = async (
     }
 
     // This file should be available to be able to decode token with the Signicat private key
-    const jwkPath = path.resolve(process.cwd(), "test-key.json");
+    const jwkPath = path.resolve(process.cwd(), "SignicatOdinKey.json");
     const jwkRaw = readFileSync(jwkPath, "utf-8");
     const jwk = JSON.parse(jwkRaw);
     const key = await importJWK(jwk, jwk.alg || "RSA-OAEP");
