@@ -6,6 +6,8 @@ export interface OidcVerifyRequest extends Request {
   query: {
     code: string;
     state: string;
+    error: string;
+    error_description: string;
   };
 }
 

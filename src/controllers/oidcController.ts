@@ -86,11 +86,17 @@ export const redirectVerify = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { code, state } = req.query;
+    console.log("redirect query:", req.query);
 
-    // TODO: check if we need to check state parameter to send callbacks to the app
-    console.log("code", code);
-    console.log("state", state);
+    const { code, state, error, error_description } = req.query;
+
+    if (error) {
+      return sendWebViewMessage(res, {
+        error,
+        errorDescription:
+          error_description || "OIDC provider returned an error",
+      });
+    }
 
     if (!code) {
       return sendWebViewMessage(res, { error: "Missing authorization code" });
@@ -99,28 +105,29 @@ export const redirectVerify = async (
     const payload = new URLSearchParams({
       grant_type: "authorization_code",
       redirect_uri: config.signicat.redirectUri,
-      code,
+      code: code as string,
       client_id: config.signicat.clientId,
     });
 
     const { success, data } = await requestToken(payload);
 
     if (!success) {
-      const errorDescription =
-        data.error_description || "Failed to create token";
-      return sendWebViewMessage(res, { error: errorDescription });
+      return sendWebViewMessage(res, {
+        error: data.error_description || "Failed to create token",
+      });
     }
 
-    sendWebViewMessage(res, {
+    return sendWebViewMessage(res, {
       accessToken: data.access_token,
       idToken: data.id_token,
       tokenType: data.token_type,
       refreshToken: data.refresh_token,
       expiresIn: data.expires_in?.toString(),
     });
-  } catch (error: any) {
-    const errorMessage = error?.message || "Unexpected error";
-    return sendWebViewMessage(res, { error: errorMessage });
+  } catch (err: any) {
+    return sendWebViewMessage(res, {
+      error: err?.message || "Unexpected error",
+    });
   }
 };
 
