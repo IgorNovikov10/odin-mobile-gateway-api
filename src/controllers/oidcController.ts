@@ -91,11 +91,10 @@ export const redirectVerify = async (
     const { code, state, error, error_description } = req.query;
 
     if (error) {
-      return sendWebViewMessage(res, {
-        error,
-        errorDescription:
-          error_description || "OIDC provider returned an error",
-      });
+      const errorMsg = error_description
+        ? `${error}: ${error_description}`
+        : error;
+      return sendWebViewMessage(res, { error: errorMsg });
     }
 
     if (!code) {
